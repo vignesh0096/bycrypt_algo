@@ -12,13 +12,13 @@ class UserRegistration(CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         try:
-            user = User.objects.filter(email = request.data['email'])
+            user = User.objects.filter(email=request.data['email'])
             serializer = UserSerializer(data=request.data)
             if user:
                 return Response('You are already registered')
             else:
                 password = request.data['password']
-                salt = bcrypt.gensalt()
+                # salt = bcrypt.gensalt()
                 hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
                 if serializer.is_valid():
                     User.objects.create(name=serializer.data['name'], email=serializer.data['email'],
@@ -52,9 +52,9 @@ class Login(CreateAPIView):
     def post(self, request, *args, **kwargs):
         try:
             user = User.objects.get(email=request.data['email'])
-            password = user.password
-            pas = request.data['password'].encode('utf-8')
-            if bcrypt.hashpw(pas, bcrypt.gensalt()) == password:
+            hashed_password = user.password
+            password = request.data['password'].encode('utf-8')
+            if bcrypt.hashpw(password, bcrypt.gensalt()) == hashed_password:
                 serializer = LoginSerializer(instance=user)
                 return Response(serializer.data)
             # if serializer.is_valid():
@@ -70,13 +70,6 @@ class Login(CreateAPIView):
                             'status': "success",
                             'error_details': None,
                             })
-                # else:
-                #     return Response({
-                #                     'response_code': status.HTTP_400_BAD_REQUEST,
-                #                     'message': "Incorrect password",
-                #                     'status_flag':False,
-                #                     'status': "success",
-                #                     'error_details': None})
             #
             # return Response({
             #                 'response_code': status.HTTP_400_BAD_REQUEST,
