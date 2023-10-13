@@ -5,6 +5,7 @@ from .models import *
 from .serializer import *
 from rest_framework.response import Response
 from rest_framework import status
+import re
 
 
 class UserRegistration(CreateAPIView):
@@ -14,29 +15,30 @@ class UserRegistration(CreateAPIView):
         try:
             user = User.objects.filter(email=request.data['email'])
             serializer = UserSerializer(data=request.data)
+            pattern = r"^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@#$%^&+=!]).{5,}$"
             if user:
                 return Response('You are already registered')
             else:
                 password = request.data['password']
-                # salt = bcrypt.gensalt()
-                hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-                if serializer.is_valid():
-                    User.objects.create(name=serializer.data['name'], email=serializer.data['email'],
-                                        password=hashed)
+                if re.match(pattern, password):
+                    hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+                    if serializer.is_valid():
+                        User.objects.create(name=serializer.data['name'], email=serializer.data['email'],
+                                            password=hashed)
 
-                    return Response({'response_code': status.HTTP_200_OK,
-                                     'message': "Registered successfully",
-                                     'status_flag': True,
-                                     'status': "success",
-                                     'error_details': None,
-                                     'data': []})
-                else:
-                    return Response({'response_code': status.HTTP_400_BAD_REQUEST,
-                                     'message': 'Enter valid details',
-                                     'status_flag': False,
-                                     'status': 'Failed',
-                                     })
-
+                        return Response({'response_code': status.HTTP_200_OK,
+                                         'message': "Registered successfully",
+                                         'status_flag': True,
+                                         'status': "success",
+                                         'error_details': None,
+                                         'data': []})
+                    else:
+                        return Response({'response_code': status.HTTP_400_BAD_REQUEST,
+                                         'message': 'Enter valid details',
+                                         'status_flag': False,
+                                         'status': 'Failed',
+                                         })
+                return Response({'message': 'Password must include integer and a special characters'})
         except Exception as e:
             return Response({'response_code': status.HTTP_500_INTERNAL_SERVER_ERROR,
                              'message': "cant register",
